@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CampusNav - University Navigation Assistant</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 antialiased h-screen overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Mobile Header -->
+    <header class="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-20 shadow-sm">
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-lg">
+                <i class="fa-solid font-bold text-sm text-white">🎓</i>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-800 leading-none">UniNav</h1>
+                <span class="text-xs text-slate-500 font-medium">Campus Navigator</span>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleEmergencyModal()" class="px-2.5 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-semibold flex items-center space-x-1 hover:bg-red-100 transition">
+                <i class="fa-solid fa-phone-flip text-xs"></i>
+                <span>Emergency</span>
+            </button>
+            <button onclick="toggleMobileSearchSheet()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg md:hidden">
+                <i class="fa-solid fa-sliders text-base"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Sidebar / Drawer Search Container -->
+    <aside id="searchSidebar" class="fixed inset-y-0 left-0 z-30 w-full sm:w-96 bg-white border-r border-slate-200 flex flex-col transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out shadow-xl md:shadow-none">
+        
+        <!-- Sidebar Header (Desktop) -->
+        <div class="hidden md:flex items-center justify-between p-4 border-b border-slate-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-sm">
+                    🎓
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 text-lg leading-tight">UniNav Assistant</h1>
+                    <p class="text-xs text-slate-500">Interactive Campus Route Finder</p>
+                </div>
+            </div>
+            <button onclick="toggleEmergencyModal()" class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100 transition flex items-center space-x-1">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>Help</span>
+            </button>
+        </div>
+
+        <!-- Mobile Sheet Close Header -->
+        <div class="md:hidden flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
+            <h2 class="font-bold text-slate-800">Plan Campus Route</h2>
+            <button onclick="toggleMobileSearchSheet()" class="p-1 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Search Controls Section -->
+        <div class="p-4 border-b border-slate-100 bg-slate-50/50 space-y-3">
+            <!-- Starting Location Input -->
+            <div class="relative">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Start Point</label>
+                <div class="relative flex items-center">
+                    <span class="absolute left-3 text-emerald-500"><i class="fa-solid fa-circle-dot"></i></span>
+                    <select id="startSelect" onchange="calculateAndDrawRoute()" class="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition appearance-none">
+                        <!-- Options dynamically loaded -->
+                    </select>
+                    <span class="absolute right-3 pointer-events-none text-slate-400 text-xs"><i class="fa-solid fa-chevron-down"></i></span>
+                </div>
+            </div>
+
+            <!-- Swap Locations Button Bar -->
+            <div class="flex justify-center -my-2 relative z-10">
+                <button onclick="swapLocations()" class="p-1.5 bg-white border border-slate-200 rounded-full text-slate-500 hover:text-indigo-600 hover:border-indigo-300 shadow-sm transition">
+                    <i class="fa-solid fa-arrow-down-up-across-line text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Destination Input -->
+            <div class="relative">
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Destination</label>
+                <div class="relative flex items-center">
+                    <span class="absolute left-3 text-red-500"><i class="fa-solid fa-location-dot"></i></span>
+                    <select id="endSelect" onchange="calculateAndDrawRoute()" class="w-full pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition appearance-none">
+                        <!-- Options dynamically loaded -->
+                    </select>
+                    <span class="absolute right-3 pointer-events-none text-slate-400 text-xs"><i class="fa-solid fa-chevron-down"></i></span>
+                </div>
+            </div>
+
+            <!-- Quick Presets -->
+            <div class="pt-1">
+                <span class="text-xs text-slate-400 font-medium block mb-1.5">Quick Start Presets:</span>
+                <div class="flex flex-wrap gap-1.5" id="presetButtons">
+                    <!-- Dynamic Preset Chips -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tags Bar -->
+        <div class="px-4 py-2 bg-white border-b border-slate-100 overflow-x-auto whitespace-nowrap scrollbar-none flex space-x-1.5" id="filterTags">
+            <!-- Filter buttons dynamically inserted -->
+        </div>
+
+        <!-- Landmark List / Route Instructions Tab Navigation -->
+        <div class="flex border-b border-slate-200 bg-slate-50">
+            <button id="tabLandmarksBtn" onclick="switchSidebarTab('landmarks')" class="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider text-indigo-600 border-b-2 border-indigo-600 transition">
+                Landmarks (<span id="landmarkCount">0</span>)
+            </button>
+            <button id="tabDirectionsBtn" onclick="switchSidebarTab('directions')" class="flex-1 py-2.5 text-xs font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800 transition">
+                Directions
+            </button>
+        </div>
+
+        <!-- Landmark List View -->
+        <div id="landmarksTab" class="flex-1 overflow-y-auto p-4 space-y-3">
+            <!-- Dynamic Landmark Cards -->
+        </div>
+
+        <!-- Step-by-Step Directions View -->
+        <div id="directionsTab" class="hidden flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- Dynamic Route Details Summary -->
+            <div id="routeSummary" class="p-3 bg-indigo-50 rounded-xl border border-indigo-100 flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-indigo-500 block">Estimated Walk</span>
+                    <span id="routeDistance" class="text-lg font-bold text-slate-800">0 m</span>
+                    <span id="routeTime" class="text-xs text-slate-500 ml-1">(~0 mins)</span>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-person-walking"></i>
+                </div>
+            </div>
+
+            <!-- Steps List Container -->
+            <div id="stepsList" class="space-y-3 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200">
+                <!-- Turn by turn step items -->
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Map View Area -->
+    <main class="flex-1 relative bg-slate-200 flex flex-col h-full overflow-hidden">
+        
+        <!-- Interactive SVG Campus Map -->
+        <div class="w-full h-full relative overflow-hidden bg-slate-800 flex items-center justify-center cursor-grab active:cursor-grabbing" id="mapContainer">
+            
+            <svg id="campusMapSvg" viewBox="0 0 1000 700" class="w-full h-full object-contain max-h-full transition-transform duration-200">
+                <defs>
+                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1"/>
+                    </pattern>
+                    <!-- Marker for directional route arrow -->
+                    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#6366f1"/>
+                    </marker>
+                </defs>
+
+                <!-- Map Background -->
+                <rect width="1000" height="700" fill="#0f172a" />
+                <rect width="1000" height="700" fill="url(#grid)" />
+
+                <!-- Greenery / Lawn Parks -->
+                <path d="M 150 120 C 250 100, 350 150, 300 280 C 200 300, 100 250, 150 120 Z" fill="#065f46" opacity="0.4" />
+                <path d="M 600 400 C 750 380, 850 480, 800 600 C 700 620, 580 550, 600 400 Z" fill="#065f46" opacity="0.4" />
+                <circle cx="500" cy="350" r="80" fill="#065f46" opacity="0.3"/>
+
+                <!-- Road Network / Campus Pathways -->
+                <g id="pathways" stroke="#334155" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                    <!-- Main Ring Road -->
+                    <path d="M 120 100 L 880 100 L 880 620 L 120 620 Z" />
+                    <!-- Cross Pathways -->
+                    <path d="M 500 100 L 500 620" />
+                    <path d="M 120 350 L 880 350" />
+                    <path d="M 300 100 L 300 620" />
+                    <path d="M 700 100 L 700 620" />
+                </g>
+
+                <!-- Active Route Path Layer -->
+                <path id="routePath" d="" fill="none" stroke="#6366f1" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="animated-route" marker-end="url(#arrow)"/>
+
+                <!-- Dynamic Map Pins & Nodes Render Layer -->
+                <g id="landmarksLayer"></g>
+            </svg>
+
+            <!-- Map Overlay Controls -->
+            <div class="absolute top-4 right-4 flex flex-col space-y-2 z-10">
+                <button onclick="zoomMap(1.2)" class="w-10 h-10 bg-white text-slate-700 rounded-xl shadow-md hover:bg-slate-50 flex items-center justify-center font-bold transition" title="Zoom In">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <button onclick="zoomMap(0.8)" class="w-10 h-10 bg-white text-slate-700 rounded-xl shadow-md hover:bg-slate-50 flex items-center justify-center font-bold transition" title="Zoom Out">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <button onclick="resetMapView()" class="w-10 h-10 bg-white text-slate-700 rounded-xl shadow-md hover:bg-slate-50 flex items-center justify-center font-bold transition" title="Reset View">
+                    <i class="fa-solid fa-compress"></i>
+                </button>
+            </div>
+
+            <!-- Map Legend -->
+            <div class="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur-md text-white text-xs p-2.5 rounded-xl border border-slate-700 shadow-lg hidden sm:flex space-x-4 items-center">
+                <div class="flex items-center space-x-1.5">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+                    <span>Start Node</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+                    <span>Destination</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                    <span class="w-3 h-3 rounded-full bg-indigo-500 inline-block"></span>
+                    <span>Landmark</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Step Navigator Drawer Carousel (At Bottom) -->
+        <div id="mobileStepBar" class="bg-white border-t border-slate-200 p-3 shadow-lg z-20 flex items-center justify-between transition-all">
+            <button onclick="navigateStep(-1)" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                <i class="fa-solid fa-chevron-left text-lg"></i>
+            </button>
+            <div class="flex-1 mx-3 text-center">
+                <span id="mobileStepProgress" class="text-xs font-bold text-indigo-600 uppercase tracking-wider block">Step 1 of 4</span>
+                <p id="mobileStepText" class="text-xs font-medium text-slate-800 line-clamp-1">Select a Start and Destination to navigate.</p>
+            </div>
+            <button onclick="navigateStep(1)" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+                <i class="fa-solid fa-chevron-right text-lg"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- Landmark Info Modal / Drawer -->
+    <div id="landmarkModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+        <div class="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden transform translate-y-full sm:translate-y-0 transition-transform duration-300">
+            <div class="relative h-44 bg-slate-200">
+                <img id="modalImage" src="" alt="Landmark Preview" class="w-full h-full object-cover">
+                <button onclick="closeLandmarkModal()" class="absolute top-3 right-3 w-8 h-8 bg-slate-900/60 text-white rounded-full flex items-center justify-center hover:bg-slate-900 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <span id="modalCategoryTag" class="absolute bottom-3 left-3 bg-indigo-600 text-white text-xs px-2.5 py-1 rounded-full font-semibold shadow">
+                    Category
+                </span>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <h3 id="modalTitle" class="text-xl font-bold text-slate-900">Landmark Name</h3>
+                    <p id="modalBuildingCode" class="text-xs font-semibold text-slate-400">Building Code • Ground Floor</p>
+                </div>
+                
+                <p id="modalDescription" class="text-sm text-slate-600 leading-relaxed">
+                    Detailed info about the landmark, services offered, and accessibility.
+                </p>
+
+                <!-- Amenities Badges -->
+                <div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Available Amenities</span>
+                    <div id="modalAmenities" class="flex flex-wrap gap-2">
+                        <!-- Dynamic Amenity Badges -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-2 pt-2 border-t border-slate-100">
+                    <button id="modalSetStartBtn" onclick="" class="flex-1 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-semibold text-xs rounded-xl transition flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-circle-dot"></i>
+                        <span>Set as Start</span>
+                    </button>
+                    <button id="modalSetEndBtn" onclick="" class="flex-1 py-2.5 bg-indigo-600 text-white hover:bg-indigo-700 font-semibold text-xs rounded-xl shadow-md transition flex items-center justify-center space-x-1">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>Set Destination</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contacts Modal -->
+    <div id="emergencyModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <div class="flex items-center space-x-2 text-red-600">
+                    <i class="fa-solid fa-shield-halved text-xl"></i>
+                    <h3 class="font-bold text-slate-900 text-lg">Campus Emergency</h3>
+                </div>
+                <button onclick="toggleEmergencyModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-500">Need urgent assistance or medical help? Contact campus safety hotlines immediately.</p>
+
+            <div class="space-y-2.5">
+                <a href="tel:5550199" class="p-3 bg-red-50 border border-red-100 rounded-xl flex items-center justify-between hover:bg-red-100 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-phone"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-800 block">Campus Security Hotline</span>
+                            <span class="text-xs text-slate-500">24/7 Rapid Patrol</span>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-red-600">Call 555-0199</span>
+                </a>
+
+                <a href="tel:5550188" class="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between hover:bg-blue-100 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-user-nurse"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-800 block">Student Health Center</span>
+                            <span class="text-xs text-slate-500">First Aid & Clinic</span>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-blue-600">Call 555-0188</span>
+                </a>
+
+                <a href="tel:5550177" class="p-3 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-between hover:bg-amber-100 transition">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-amber-600 text-white flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-headset"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-800 block">Fresher Helpdesk</span>
+                            <span class="text-xs text-slate-500">General Guidance</span>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-amber-600">Call 555-0177</span>
+                </a>
+            </div>
+
+            <button onclick="toggleEmergencyModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Logic -->
+    <script src="script.js"></script>
+</body>
+</html>
